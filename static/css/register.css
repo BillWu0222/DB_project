@@ -1,5 +1,5 @@
 body {
-    background: linear-gradient(to bottom, #e6f2f8, #cfe0e8); /* 與首頁相同的漸變背景 */
+    background: linear-gradient(to bottom, #e6f2f8, #cfe0e8);
     font-family: 'Arial', sans-serif;
 }
 
@@ -79,7 +79,7 @@ body {
 
 .register-btn {
     padding: 12px 20px;
-    background-color: #BFA275; /* 咖啡色按鈕 */
+    background-color: #BFA275; 
     border: none;
     border-radius: 30px;
     color: white;
@@ -89,7 +89,7 @@ body {
 }
 
 .register-btn:hover {
-    background-color: #8D714D; /* 懸停效果，較深的咖啡色 */
+    background-color: #8D714D; 
     transform: translateY(-3px);
 }
 

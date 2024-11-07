@@ -36,8 +36,8 @@ def productManager():
         if(data != None):
             flash('failed')
         else:
-            data = Product.get_product(pid)
-            Product.delete_product(pid)
+            data = Destination.get_destinations(pid)
+            Destination.delete_product(pid)
     
     elif 'edit' in request.values:
         pid = request.values.get('edit')
@@ -47,7 +47,7 @@ def productManager():
     return render_template('productManager.html', book_data = book_data, user=current_user.name)
 
 def book():
-    book_row = Product.get_all_product()
+    book_row = Destination.get_all_destination()
     book_data = []
     for i in book_row:
         book = {
@@ -67,7 +67,7 @@ def add():
             number = str(random.randrange( 10000, 99999))
             en = random.choice(string.ascii_letters)
             pid = en + number
-            data = Product.get_product(pid)
+            data = Destination.get_product(pid)
 
         pname = request.values.get('pname')
         price = request.values.get('price')
@@ -88,7 +88,7 @@ def add():
         if (len(pname) < 1 or len(price) < 1):
             return redirect(url_for('manager.productManager'))
         
-        Product.add_product(
+        Destination.add_product(
             {'pid' : pid,
              'pname' : pname,
              'price' : price,
@@ -110,7 +110,7 @@ def edit():
             return redirect(url_for('bookstore'))
 
     if request.method == 'POST':
-        Product.update_product(
+        Destination.update_product(
             {
             'pname' : request.values.get('pname'),
             'price' : request.values.get('price'),
@@ -129,7 +129,7 @@ def edit():
 
 def show_info():
     pid = request.args['pid']
-    data = Product.get_product(pid)
+    data = Destination.get_destinations(pid)
     pname = data[1]
     price = data[2]
     category = data[3]

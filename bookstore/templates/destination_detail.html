@@ -1,0 +1,59 @@
+{% extends "frontstage.html" %}
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/destination_detail.css') }}">
+{% endblock head %}
+
+{% block title %}套餐詳情{% endblock title %}
+
+{% block content %}
+<div class="container">
+    <div class="destination-detail-container">
+        
+        <!-- Package Header Information -->
+        <div class="destination-header">
+            <h1>{{ data.套餐名稱 }}</h1>
+            <p class="text-muted">開始日期：{{ data.開始日期 }} | 結束日期：{{ data.結束日期 }}</p>
+        </div>
+
+        <!-- Package Description and Price Row -->
+        <div class="description-price mb-4">
+            <div class="description">
+                <h4>套餐介紹</h4>
+                <p>{{ data.描述 }}</p>
+            </div>
+            <div class="price">
+                <h4>價格</h4>
+                <p class="price-amount">$ {{ data.價格 }}</p>
+            </div>
+        </div>
+
+        <!-- Destinations Included in the Package -->
+        <div class="package-destinations mb-4">
+            <h4>包含的景點</h4>
+            <div class="row">
+                {% for destination in data.景點列表 %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ destination.景點名稱 }}</h5>
+                            <p class="card-text"><strong>位置：</strong>{{ destination.位置 }}</p>
+                            <p class="card-text"><strong>行程價格：</strong>${{ destination.行程價格 }}</p>
+                            <p class="card-text"><strong>描述：</strong>{{ destination.描述 }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="button-group">
+            <a href="{{ url_for('travel_packages.travel_packages') }}" class="btn btn-back">回套餐列表</a>
+            <form method="post" action="{{ url_for('travel_packages.cart') }}" style="display:inline;">
+                <button class="btn btn-add-to-cart" type="submit" name="packageid" value="{{ data.套餐編號 }}">加入購物車</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}

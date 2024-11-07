@@ -1,59 +1,50 @@
 {% extends "frontstage.html" %}
 {% block head %}
 {{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/order.css') }}">
 {% endblock head %}
 
-{% block title %}BookStore{% endblock title%}
+{% block title %}訂單確認{% endblock title %}
 
-{% block content%}
+{% block content %}
 <br/>
 <div class="container-xl">
-  <form method="post" action={{ url_for('bookstore.cart') }}>
-    <table class="table table-bordered">
-      <tr>
-        <th><center>商品編號</center></th>
-        <th><center>商品名稱</center></th>
-        <th><center>商品價格</center></th>
-        <th><center>數量</center></th>
-      </tr>
-      {% for book in data %}
-      <tr>
-        <td> <center>{{ book.商品編號 }}</center></td>
-        <td> <center>{{ book.商品名稱 }}</center></td>
-        <td> <center>{{ book.商品價格 }}</center></td>
-        <td width="20%">
-          <center>
-            {{ book.數量 }}
-          </center>
-        </td>
-      </tr>
-      {% endfor %}
+  <form method="post" action="{{ url_for('travel_packages.order') }}">
+    <table class="table table-bordered order-table">
+      <thead>
+        <tr>
+          <th><center>套餐編號</center></th>
+          <th><center>套餐名稱</center></th>
+          <th><center>開始日期</center></th>
+          <th><center>結束日期</center></th>
+          <th><center>價格</center></th>
+          <th><center>數量</center></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in data %}
+        <tr>
+          <td><center>{{ item['套餐編號'] }}</center></td>
+          <td><center>{{ item['套餐名稱'] }}</center></td>
+          <td><center>{{ item['開始日期'] }}</center></td>
+          <td><center>{{ item['結束日期'] }}</center></td>
+          <td><center>{{ item['價格'] }} 元</center></td>
+          <td><center>{{ item['數量'] }}</center></td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
-    <div class="col align-self-end">
-      
-    </div>
-    <div class="container-xxl" style="text-align: right;">
-      <div class="row">
-        <div class="col align-self-start">
- 
-        </div>
-        <div class="col align-self-center">
 
-        </div>
-        <div class="col align-self-end">
-          <b class="ml-50">訂單總價：{{ total }} 元</b>
-        </div>
+    <div class="order-total">
+      <b>訂單總價：{{ total }} 元</b>
+    </div>
+
+    <center>
+      <div class="order-actions">
+        <a href="{{ url_for('travel_packages.cart') }}" class="btn back-to-cart-btn">回購物車</a>
+        <button class="btn submit-order-btn" type="submit" value="order" name="order">下訂單</button>
       </div>
-    </div>
-
-    
-    <center> 
-      <div class="option">
-        <a href="{{ url_for('bookstore.cart') }}"><button class="btn btn-primary" type="submit" >回購物車</button></a>
-        <button class="btn btn-success" type="submit" value="order" name="order">下訂單</button>
-    </div>
     </center>
-
   </form>
 </div>
-{% endblock content%}
+{% endblock content %}

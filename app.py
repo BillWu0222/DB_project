@@ -1,34 +1,37 @@
-import re, os, random, string
-from typing_extensions import Self
-from flask import Flask, request, template_rendered, Blueprint, url_for, redirect, flash, render_template
+import os
+from flask import Flask, render_template, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from datetime import datetime
-from numpy import identity, product
-from sqlalchemy import null
-from api.api import *
-from api.sql import *
-from bookstore.views.store import *
-from backstage.views.analysis import *
-from backstage.views.manager import *
-from link import *
-from werkzeug.utils import secure_filename
+from api.api import api  
+from api.sql import Member 
+from bookstore.views.store import store as travel_packages 
+from backstage.views.analysis import analysis
+from backstage.views.manager import manager
 
-## Flask-Login : 確保未登入者不能使用系統
 app = Flask(__name__)
-app.secret_key = 'Your Key' 
+app.secret_key = 'Your Key'  
 
-app.register_blueprint(api, url_prefix='/')
-app.register_blueprint(store, url_prefix='/bookstore')
+# Initialize LoginManager
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+# Set login_manager's user_loader
+@login_manager.user_loader
+def load_user(user_id):
+    return Member.get_member_by_id(user_id) 
+
+# Register Blueprints
+app.register_blueprint(api, url_prefix='/api')
+app.register_blueprint(travel_packages, url_prefix='/packages')  
 app.register_blueprint(analysis, url_prefix='/backstage')
 app.register_blueprint(manager, url_prefix='/backstage')
 
-login_manager.init_app(app)
-
+# Home route
 @app.route('/')
 def index():
     return render_template('index.html')
 
+# Run app
 if __name__ == '__main__':
     app.debug = True
-    app.secret_key = "Your Key"
     app.run()
+

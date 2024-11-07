@@ -3,46 +3,42 @@
 {{ super() }}
 {% endblock head %}
 
-{% block title %}BookStore{% endblock title%}
+{% block title %}旅遊套裝詳細資訊{% endblock title %}
 
 {% block content %}
 
-{% set temp = 'img/' + data.商品圖片 %}
+{% set temp = 'img/' + data.圖片 %}
 
 <br/>
 <div class="row">
-<div class="card" style="width: 20rem;margin-left:5%">
-  <img src={{ url_for('static', filename = temp  ) }} class="card-img-top">
+<div class="card" style="width: 20rem; margin-left:5%">
+  <img src={{ url_for('static', filename=temp) }} class="card-img-top" alt="套裝圖片">
   <div class="card-body">
-    <h5 class="card-title">{{ data.商品名稱 }}</h5>
-    <p class="card-text"></p>
+    <h5 class="card-title">{{ data.套裝名稱 }}</h5>
   </div>
   <ul class="list-group list-group-flush">
-    <li class="list-group-item"><b>商品類別</b>&nbsp;&nbsp;{{ data.類別 }}</li>
-    <li class="list-group-item"><b>商品單價</b>&nbsp;&nbsp;{{ data.單價 }}</li>
+    <li class="list-group-item"><b>價格</b>&nbsp;&nbsp;${{ data.價格 }}</li>
+    <li class="list-group-item"><b>開始日期</b>&nbsp;&nbsp;{{ data.開始日期 }}</li>
+    <li class="list-group-item"><b>結束日期</b>&nbsp;&nbsp;{{ data.結束日期 }}</li>
   </ul>
   <div class="card-body">
-    <a href="{{ url_for('bookstore.bookstore') }}" class="btn btn-outline-primary">回商品列表</a>
+    <a href="{{ url_for('travel_packages.travel_packages') }}" class="btn btn-outline-primary">回套裝列表</a>
   </div>
 </div>
-
 
 <div class="col-sm-6">
-  <form method="post" action={{ url_for('bookstore.cart') }}>
-<div class="card" style="margin-top:10%">
-  <h5 class="card-header">商品介紹</h5>
-  <div class="card-body">
-    <p class="card-text">
-      {{data.商品敘述}}
-    </p>
-    <button class="btn btn-outline-success" type="submit" value="{{data.商品編號}}" name="pid">加入購物車</a>
-  </div>
+  <form method="post" action={{ url_for('travel_packages.cart') }}>
+    <div class="card" style="margin-top:10%">
+      <h5 class="card-header">行程介紹</h5>
+      <div class="card-body">
+        <p class="card-text">
+          {{ data.描述 }}
+        </p>
+        <button class="btn btn-outline-success" type="submit" value="{{ data.套裝編號 }}" name="plid">加入購物車</button>
+      </div>
+    </div>
+  </form>
 </div>
-</form>
-</div>
-
-
 </div>
 
-
-{% endblock content%}
+{% endblock content %}

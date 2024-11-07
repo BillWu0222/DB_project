@@ -36,27 +36,27 @@ body {
 }
 
 .index_btn {
-    display: flex; /* 使用 flex 讓內容居中 */
+    display: flex; 
     justify-content: center;
     align-items: center;
-    padding: 10px 30px; /* 調整內邊距 */
-    background-color: #BFA275; /* 咖啡色調 */
+    padding: 10px 30px; 
+    background-color: #BFA275; 
     border: none;
     border-radius: 30px;
     color: white;
     font-size: 1.2rem;
-    font-weight: bold; /* 增強文字可讀性 */
+    font-weight: bold; 
     cursor: pointer;
-    min-width: 100px; /* 設置按鈕的最小寬度 */
-    height: 50px; /* 設置按鈕的固定高度 */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 增加陰影效果 */
+    min-width: 100px; 
+    height: 50px; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
 }
 
 .index_btn:hover {
-    background-color: #8D714D; /* 懸停的深色調 */
+    background-color: #8D714D; 
     transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* 增強懸停時的陰影效果 */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); 
 }
 
 @keyframes fadeIn {
