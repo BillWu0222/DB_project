@@ -28,11 +28,31 @@
             </div>
         </div>
 
-        <!-- Destinations Included in the Package -->
-        <div class="package-destinations mb-4">
-            <h4>包含的景點</h4>
+        <!-- Accommodation Information -->
+        {% if data.住宿 %}
+        <div class="accommodation-info mb-4">
+            <h4>住宿</h4>
             <div class="row">
-                {% for destination in data.景點列表 %}
+                <div class="col-md-12">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ data.住宿.accname }}</h5>
+                            <p class="card-text"><strong>地址：</strong>{{ data.住宿.address }}</p>
+                            <p class="card-text"><strong>入住天數：</strong>{{ data.住宿.days }} 天</p>
+                            <p class="card-text"><strong>價格：</strong>${{ data.住宿.accprice }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Day 1 Destinations -->
+        {% if data.day1_destinations %}
+        <div class="package-destinations mb-4">
+            <h4>Day 1 行程</h4>
+            <div class="row">
+                {% for destination in data.day1_destinations %}
                 <div class="col-md-6 mb-4">
                     <div class="card h-100 shadow-sm">
                         <div class="card-body">
@@ -46,6 +66,28 @@
                 {% endfor %}
             </div>
         </div>
+        {% endif %}
+
+        <!-- Day 2 Destinations -->
+        {% if data.day2_destinations %}
+        <div class="package-destinations mb-4">
+            <h4>Day 2 行程</h4>
+            <div class="row">
+                {% for destination in data.day2_destinations %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ destination.景點名稱 }}</h5>
+                            <p class="card-text"><strong>位置：</strong>{{ destination.位置 }}</p>
+                            <p class="card-text"><strong>行程價格：</strong>${{ destination.行程價格 }}</p>
+                            <p class="card-text"><strong>描述：</strong>{{ destination.描述 }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Navigation Buttons -->
         <div class="button-group">

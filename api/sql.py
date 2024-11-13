@@ -54,7 +54,7 @@ class DB:
                 return cursor.fetchone()
         finally:
             DB.release(connection)
-
+            
 class Destination:
     @staticmethod
     def count():
@@ -73,8 +73,18 @@ class Destination:
 
     @staticmethod
     def add_destination(input_data):
-        sql = 'INSERT INTO destination (dname, location, dprice, dpid, desc) VALUES (%s, %s, %s, %s, %s)'
-        DB.execute_input(sql, (input_data['dname'], input_data['location'], input_data['dprice'], input_data['dpid'], input_data['desc']))
+        sql = '''
+        INSERT INTO destination (dname, location, dprice, dpid, "desc", day) 
+        VALUES (%s, %s, %s, %s, %s, %s)
+        '''
+        DB.execute_input(sql, (
+            input_data['dname'], 
+            input_data['location'], 
+            input_data['dprice'], 
+            input_data['dpid'], 
+            input_data['desc'],
+            input_data['day']  # 新增 day 欄位
+        ))
 
     @staticmethod
     def delete_destination(destinationid):
@@ -83,8 +93,84 @@ class Destination:
 
     @staticmethod
     def update_destination(input_data):
-        sql = 'UPDATE destination SET dname = %s, location = %s, dprice = %s, dpid = %s, desc = %s WHERE destinationid = %s'
-        DB.execute_input(sql, (input_data['dname'], input_data['location'], input_data['dprice'], input_data['dpid'], input_data['desc'], input_data['destinationid']))
+        sql = '''
+        UPDATE destination 
+        SET dname = %s, location = %s, dprice = %s, dpid = %s, "desc" = %s, day = %s 
+        WHERE destinationid = %s
+        '''
+        DB.execute_input(sql, (
+            input_data['dname'], 
+            input_data['location'], 
+            input_data['dprice'], 
+            input_data['dpid'], 
+            input_data['desc'], 
+            input_data['day'],  # 更新 day 欄位
+            input_data['destinationid']
+        ))
+
+    @staticmethod
+    def get_destinations_by_package(packageid):
+        """
+        Retrieves destinations by package ID, ordered by day.
+        """
+        sql = '''
+        SELECT dname, location, dprice, "desc", day 
+        FROM destination 
+        WHERE dpid = %s 
+        ORDER BY day
+        '''
+        return DB.fetchall(sql, (packageid,))
+
+class Accommodation:
+    @staticmethod
+    def count():
+        sql = 'SELECT COUNT(*) FROM accommodation'
+        return DB.fetchone(sql)[0]
+
+    @staticmethod
+    def get_accommodation_by_package(packageid):
+        sql = 'SELECT accname, address, days, accprice FROM accommodation WHERE accpid = %s'
+        return DB.fetchall(sql, (packageid,))
+
+    @staticmethod
+    def get_all_accommodations():
+        sql = 'SELECT * FROM accommodation'
+        return DB.fetchall(sql)
+
+    @staticmethod
+    def add_accommodation(input_data):
+        sql = '''
+        INSERT INTO accommodation (accname, address, days, accprice, accpid) 
+        VALUES (%s, %s, %s, %s, %s)
+        '''
+        DB.execute_input(sql, (
+            input_data['accname'],
+            input_data['address'],
+            input_data['days'],
+            input_data['accprice'],
+            input_data['accpid']
+        ))
+
+    @staticmethod
+    def delete_accommodation(accid):
+        sql = 'DELETE FROM accommodation WHERE accid = %s'
+        DB.execute_input(sql, (accid,))
+
+    @staticmethod
+    def update_accommodation(input_data):
+        sql = '''
+        UPDATE accommodation 
+        SET accname = %s, address = %s, days = %s, accprice = %s, accpid = %s 
+        WHERE accid = %s
+        '''
+        DB.execute_input(sql, (
+            input_data['accname'],
+            input_data['address'],
+            input_data['days'],
+            input_data['accprice'],
+            input_data['accpid'],
+            input_data['accid']
+        ))
 
 class Package:
     @staticmethod
@@ -171,6 +257,19 @@ class Member(UserMixin):
     def get_role(user_id):
         sql = 'SELECT identity, name FROM member WHERE mid = %s'
         return DB.fetchone(sql, (user_id,))
+    
+    @staticmethod
+    def get_order(user_id):
+        """
+        Retrieve all orders made by a specific user.
+        """
+        sql = '''
+        SELECT o.oid, o.carttime, o.total_price, o.mid
+        FROM order_list o
+        WHERE o.mid = %s
+        ORDER BY o.carttime DESC
+        '''
+        return DB.fetchall(sql, (user_id,))
     
 class Cart:
     @staticmethod
@@ -271,49 +370,192 @@ class Records:
         return result[0] if result else 0
     
 class Order_List:
+    
     @staticmethod
     def add_order(input_data):
-        sql = 'INSERT INTO order_list (oid, mid, carttime, price, plid) VALUES (DEFAULT, %s, TO_TIMESTAMP(%s, %s), %s, %s)'
-        DB.execute_input(sql, (input_data['mid'], input_data['ordertime'], input_data['format'], input_data['total'], input_data['plid']))
+        """
+        Add a new order and insert price and total_price.
+        """
+        sql = '''
+        INSERT INTO order_list (oid, mid, carttime, total_price, price, plid, transactionid)
+        VALUES (DEFAULT, %s, TO_TIMESTAMP(%s, %s), %s, %s, %s, %s)
+        '''
+        DB.execute_input(sql, (
+            input_data['mid'],
+            input_data['ordertime'],
+            input_data['format'],
+            input_data['total_price'],  # 訂單的總價格
+            input_data['price'],  # 單筆套餐的價格
+            input_data['plid'],
+            input_data['transactionid']
+        ))
+
+    @staticmethod
+    def calculate_total_price(tno):
+        """
+        Calculate the total price for a given transaction based on records table's price and amount.
+        """
+        sql = '''
+        SELECT SUM(r.price * r.amount) AS total_price
+        FROM records r
+        WHERE r.transactionid = %s
+        '''
+        result = DB.fetchone(sql, (tno,))
+        return result[0] if result else 0
 
     @staticmethod
     def get_order():
+        """
+        Retrieves all orders for the order management page in the admin backend.
+        """
         sql = '''
-        SELECT o.oid, m.name, o.price, o.carttime
+        SELECT o.oid AS 訂單編號, m.name AS 訂購人, o.total_price AS 訂單總價, o.carttime AS 訂單時間
         FROM order_list o
-        NATURAL JOIN member m
+        JOIN member m ON o.mid = m.mid
         ORDER BY o.carttime DESC
         '''
         return DB.fetchall(sql)
 
     @staticmethod
-    def get_orderdetail():
+    def get_user_order(user_id):
+        """
+        Retrieve orders for a specific user.
+        """
         sql = '''
-        SELECT o.oid, d.dname, r.price, r.amount
+        SELECT oid, total_price, carttime
+        FROM order_list
+        WHERE mid = %s
+        ORDER BY carttime DESC;
+        '''
+        return DB.fetchall(sql, (user_id,))
+
+    @staticmethod
+    def get_order_detail(order_id):
+        """
+        Retrieve detailed information of each item in a specific order.
+        """
+        sql = '''
+        SELECT o.oid AS 訂單編號,
+               p.pname AS 套餐名稱,
+               r.price AS 套餐單價,
+               r.amount AS 訂購數量
         FROM order_list o
-        JOIN records r ON o.plid = r.plid
-        JOIN destination d ON r.plid = d.destinationid
+        JOIN records r ON o.transactionid = r.transactionid
+        JOIN package p ON r.plid = p.plid
+        WHERE o.oid = %s
+        ORDER BY p.pname;
+        '''
+        return DB.fetchall(sql, (order_id,))
+
+    @staticmethod
+    def get_user_order_detail(user_id):
+        """
+        取得特定用戶的所有訂單詳細資訊，包括訂單中的每個套餐項目。
+        """
+        sql = '''
+        SELECT o.oid AS 訂單編號,
+               p.pname AS 套餐名稱,
+               r.price AS 套餐單價,
+               r.amount AS 訂購數量
+        FROM order_list o
+        JOIN records r ON o.transactionid = r.transactionid
+        JOIN package p ON r.plid = p.plid
+        WHERE o.mid = %s
+        ORDER BY o.oid, p.pname;
+        '''
+        return DB.fetchall(sql, (user_id,))
+    
+    @staticmethod
+    def get_admin_order():
+        # 後台專用的訂單查詢
+        sql = '''
+        SELECT o.oid AS 訂單編號, m.name AS 訂購人, o.total_price AS 訂單總價, o.carttime AS 訂單時間
+        FROM order_list o
+        JOIN member m ON o.mid = m.mid
+        ORDER BY o.carttime DESC
         '''
         return DB.fetchall(sql)
 
-
+    @staticmethod
+    def get_all_order_details():
+        # 後台專用的訂單詳細資訊查詢
+        sql = '''
+        SELECT o.oid AS 訂單編號,
+               p.pname AS 套餐名稱,
+               r.price AS 單價,
+               r.amount AS 數量
+        FROM order_list o
+        JOIN records r ON o.transactionid = r.transactionid
+        JOIN package p ON r.plid = p.plid
+        ORDER BY o.oid, p.pname;
+        '''
+        return DB.fetchall(sql)
+    
 class Analysis:
     @staticmethod
-    def month_price(i):
-        sql = 'SELECT EXTRACT(MONTH FROM ordertime), SUM(price) FROM order_list WHERE EXTRACT(MONTH FROM ordertime) = %s GROUP BY EXTRACT(MONTH FROM ordertime)'
-        return DB.fetchall(sql, (i,))
+    def month_price(month):
+        """
+        查詢每月的總營收，以 `carttime` 欄位的月份作為條件
+        """
+        sql = '''
+        SELECT EXTRACT(MONTH FROM carttime) AS month, COALESCE(SUM(total_price), 0) AS revenue
+        FROM order_list
+        WHERE EXTRACT(MONTH FROM carttime) = %s
+        GROUP BY month
+        '''
+        return DB.fetchall(sql, (month,))
 
     @staticmethod
-    def month_count(i):
-        sql = 'SELECT EXTRACT(MONTH FROM ordertime), COUNT(oid) FROM order_list WHERE EXTRACT(MONTH FROM ordertime) = %s GROUP BY EXTRACT(MONTH FROM ordertime)'
-        return DB.fetchall(sql, (i,))
+    def month_count(month):
+        """
+        查詢每月的訂單數量，以 `carttime` 欄位的月份作為條件
+        """
+        sql = '''
+        SELECT EXTRACT(MONTH FROM carttime) AS month, COUNT(oid) AS order_count
+        FROM order_list
+        WHERE EXTRACT(MONTH FROM carttime) = %s
+        GROUP BY month
+        '''
+        return DB.fetchall(sql, (month,))
+
+    @staticmethod
+    def category_sale():
+        """
+        查詢不同套餐的銷售數量，按照每個套餐的 `pname` 分組
+        """
+        sql = '''
+        SELECT SUM(r.amount) AS sales, p.pname AS package_name
+        FROM records r
+        JOIN package p ON r.plid = p.plid
+        GROUP BY p.pname
+        ORDER BY sales DESC
+        '''
+        return DB.fetchall(sql)
 
     @staticmethod
     def member_sale():
-        sql = 'SELECT SUM(price), member.mid, member.name FROM order_list JOIN member ON order_list.mid = member.mid WHERE member.identity = %s GROUP BY member.mid, member.name ORDER BY SUM(price) DESC'
-        return DB.fetchall(sql, ('user',))
+        """
+        查詢每位會員的總消費金額，以會員的 `mid` 和 `name` 分組並排序
+        """
+        sql = '''
+        SELECT COALESCE(SUM(o.total_price), 0) AS total_spent, m.mid, m.name
+        FROM order_list o
+        JOIN member m ON o.mid = m.mid
+        GROUP BY m.mid, m.name
+        ORDER BY total_spent DESC
+        '''
+        return DB.fetchall(sql)
 
     @staticmethod
     def member_sale_count():
-        sql = 'SELECT COUNT(*), member.mid, member.name FROM order_list JOIN member ON order_list.mid = member.mid WHERE member.identity = %s GROUP BY member.mid, member.name ORDER BY COUNT(*) DESC'
-        return DB.fetchall(sql, ('user',))
+        """
+        查詢每位會員的訂單數量，以會員的 `mid` 和 `name` 分組並排序
+        """
+        sql = '''
+        SELECT COUNT(o.oid) AS order_count, m.mid, m.name
+        FROM order_list o
+        JOIN member m ON o.mid = m.mid
+        GROUP BY m.mid, m.name
+        ORDER BY order_count DESC
+        '''
+        return DB.fetchall(sql)

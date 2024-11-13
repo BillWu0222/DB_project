@@ -1,0 +1,132 @@
+{% extends "backstage.html" %}
+{% block head %}
+{{ super() }}
+{% endblock head %}
+
+{% block title %} 套餐管理 {% endblock title %}
+
+{% block content %}
+
+{% with messages = get_flashed_messages() %}
+{% if messages[0] == 'No permission' %}
+<script language="javascript">
+    alert('您沒有使用者的權限喔！');
+</script>
+{% endif %}
+{% endwith %}
+
+{% with messages = get_flashed_messages() %}
+{% if messages[0] == 'failed' %}
+<script language="javascript">
+    alert('有使用者有使用到這筆資料，所以不能刪除');
+</script>
+{% endif %}
+{% endwith %}
+
+<script>
+    $(document).ready(function(){
+        $("#keyword").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#packageTable tr").filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
+    });
+</script>
+
+<div class="d-flex justify-content-between container-xxl">
+    <div class="d-flex col-sm-4">
+        <span class="input-group-text" id="basic-addon1">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+          </svg>
+        </span>
+        <input class="form-control me-2" id="keyword" placeholder="搜尋套餐" aria-label="Search">
+    </div>
+    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+        新增套餐
+    </button>
+</div>
+
+<form method="post" enctype="multipart/form-data" action="{{ url_for('manager.add') }}">
+    <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">新增套餐</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="inputPackageName" class="form-label">套餐名稱</label>
+                        <input type="text" class="form-control" id="inputPackageName" name="pname" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputPrice" class="form-label">套餐價格</label>
+                        <input type="number" class="form-control" id="inputPrice" name="price" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputStartDate" class="form-label">開始日期</label>
+                        <input type="date" class="form-control" id="inputStartDate" name="start_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputEndDate" class="form-label">結束日期</label>
+                        <input type="date" class="form-control" id="inputEndDate" name="end_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputQuantity" class="form-label">數量</label>
+                        <input type="number" class="form-control" id="inputQuantity" name="quantity" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputDescription" class="form-label">套餐描述</label>
+                        <textarea class="form-control" id="inputDescription" name="description" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-success">確定新增</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<br/>
+
+<div class="container-xxl">
+<form method='post' action="{{ url_for('manager.packageManager') }}" >
+<table id="manager" class="table table-bordered">
+    <thead>
+        <tr>
+            <th width="10%"><center>套餐編號</center></th>
+            <th width="20%"><center>套餐名稱</center></th>
+            <th width="15%"><center>價格</center></th>
+            <th width="15%"><center>開始日期</center></th>
+            <th width="15%"><center>結束日期</center></th>
+            <th colspan="2"><center>資料操作</center></th>
+        </tr>
+    </thead>
+    <tbody id="packageTable">
+    {% for package in package_data %}
+        <tr>
+            <td><center>{{ package.套餐編號 }}</center></td>
+            <td><center>{{ package.套餐名稱 }}</center></td>
+            <td><center>{{ package.價格 }}</center></td>
+            <td><center>{{ package.開始日期 }}</center></td>
+            <td><center>{{ package.結束日期 }}</center></td>
+            <td><center><button type="submit" value="{{ package.套餐編號 }}" name="edit" class="btn btn-success">編輯套餐</button></center></td>
+            <td><center><button type="submit" value="{{ package.套餐編號 }}" name="delete" onclick="return confirm('你確定要刪除 \'{{ package.套餐名稱 }}\' 嗎？')" class="btn btn-danger">刪除套餐</button></center></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</form>
+</div>
+
+<script>
+    function have_package(){
+      alert('有使用者有使用到這筆資料，所以不能刪除');
+    }
+</script>
+
+{% endblock content %}

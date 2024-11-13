@@ -1,6 +1,5 @@
 from flask import render_template, Blueprint
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from link import *
+from flask_login import login_required, current_user
 from api.sql import Analysis
 
 analysis = Blueprint('analysis', __name__, template_folder='../templates')
@@ -8,52 +7,44 @@ analysis = Blueprint('analysis', __name__, template_folder='../templates')
 @analysis.route('/dashboard')
 @login_required
 def dashboard():
+    # 各月的收入和訂單數量
     revenue = []
-    dataa = []
-    for i in range(1,13):
-        row = Analysis.month_price(i)
-
-        if not row:
+    order_counts = []
+    for month in range(1, 13):
+        # 月收入
+        monthly_revenue_row = Analysis.month_price(month)
+        if monthly_revenue_row:
+            revenue.append(monthly_revenue_row[0][1])  # 月收入
+        else:
             revenue.append(0)
+
+        # 月訂單數量
+        monthly_count_row = Analysis.month_count(month)
+        if monthly_count_row:
+            order_counts.append(monthly_count_row[0][1])  # 月訂單數量
         else:
-            for j in row:
-                revenue.append(j[1])
-        
-        row = Analysis.month_count(i)
-        
-        if not row:
-            dataa.append(0)
-        else:
-            for k in row:
-                dataa.append(k[1])
-        
-    row = Analysis.category_sale()
-    datab = []
-    for i in row:
-        temp = {
-            'value': i[0],
-            'name': i[1]
-        }
-        datab.append(temp)
-    
-    row = Analysis.member_sale()
-    
-    datac = []
-    nameList = []
-    counter = 0
-    
-    for i in row:
-        counter = counter + 1
-        datac.append(i[0])
-    for j in row:
-        nameList.append(j[2])
-    
-    counter = counter - 1
-    
-    row = Analysis.member_sale_count()
-    countList = []
-    
-    for i in row:
-        countList.append(i[0])
-        
-    return render_template('dashboard.html', counter = counter, revenue = revenue, dataa = dataa, datab = datab, datac = datac, nameList = nameList, countList = countList)
+            order_counts.append(0)
+
+    # 各類套餐銷量
+    category_sales = Analysis.category_sale()
+    category_sales_data = [{'value': sale[0], 'name': sale[1]} for sale in category_sales]
+
+    # 會員消費總額排名
+    member_sales = Analysis.member_sale()
+    member_revenue = [sale[0] for sale in member_sales]  # 消費金額
+    member_names = [sale[2] for sale in member_sales]  # 會員名稱
+
+    # 會員訂單數量排名
+    member_order_counts = Analysis.member_sale_count()
+    order_count_list = [count[0] for count in member_order_counts]  # 訂單數量列表
+
+    return render_template(
+        'dashboard.html',
+        revenue=revenue,
+        dataa=order_counts,
+        datab=category_sales_data,
+        datac=member_revenue,
+        nameList=member_names,
+        countList=order_count_list,
+        user=current_user.name
+    )

@@ -1,0 +1,112 @@
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    color: #333;
+    background-color: #f4f8fb;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+}
+
+/* Package Table Styles */
+.package_table .card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    transition: transform 0.3s ease;
+    overflow: hidden;
+}
+
+.package_table .card:hover {
+    transform: translateY(-5px);
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.card-title {
+    font-size: 1.4em;
+    color: #2c3e50;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.card-text {
+    font-size: 1em;
+    line-height: 1.6;
+    color: #606060;
+}
+
+/* Buttons */
+.package_table .btn {
+    padding: 10px 20px;
+    font-size: 1em;
+    font-weight: bold;
+    border-radius: 30px;
+    transition: all 0.3s ease;
+}
+
+/* Primary Button - 查看套餐資訊 */
+.package_table .btn-outline-primary {
+    background-color: #BFA275; /* 套餐資訊的配色 */
+    color: #ffffff;
+    border: none;
+}
+
+.package_table .btn-outline-primary:hover {
+    background-color: #8D714D;
+}
+
+/* Secondary Button - 加入購物車 */
+.package_table .btn-outline-success {
+    background-color: #bdc3c7; /* 柔和的灰藍色 */
+    color: #ffffff;
+    border: none;
+}
+
+.package_table .btn-outline-success:hover {
+    background-color: #95a5a6;
+}
+
+/* Input Group for Search Bar */
+.input-group .form-control {
+    border-top-left-radius: 30px;
+    border-bottom-left-radius: 30px;
+}
+
+.input-group .btn-outline-success {
+    border-top-right-radius: 30px;
+    border-bottom-right-radius: 30px;
+    background-color: #BFA275;
+    color: #ffffff;
+    border: none;
+}
+
+.input-group .btn-outline-success:hover {
+    background-color: #8D714D;
+}
+
+/* Pagination */
+.pagination .page-item .page-link {
+    color: #BFA275;
+    font-weight: bold;
+    border: none;
+    padding: 10px 15px;
+    transition: background-color 0.3s ease;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #BFA275;
+    color: #ffffff;
+    border-radius: 50%;
+}
+
+.pagination .page-item .page-link:hover {
+    background-color: #8D714D;
+    color: #ffffff;
+}

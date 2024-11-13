@@ -81,35 +81,76 @@ body {
 .price .price-amount {
     font-size: 2em;
     font-weight: bold;
-    color: #555555; /* A more neutral color */
+    color: #555555;
+}
+
+/* Day Sections */
+.day-section {
+    margin-top: 40px;
+}
+
+.day-section h4 {
+    font-size: 1.6em;
+    color: #34495e;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-align: left;
+    padding-left: 10px;
+    border-left: 5px solid #BFA275;
+}
+
+/* Accommodation Section */
+.accommodation-info {
+    margin-top: 20px;
+}
+
+.accommodation-info h4 {
+    font-size: 1.5em;
+    color: #34495e;
+    font-weight: bold;
+    margin-bottom: 15px;
+    text-align: left;
+    padding-left: 20px;
+}
+
+.accommodation-info .card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    margin-bottom: 20px;
 }
 
 /* Package Destinations */
+.package-destinations {
+    margin-top: 20px;
+}
+
 .package-destinations h4 {
     font-size: 1.5em;
     color: #34495e;
     font-weight: bold;
-    margin-bottom: 20px;
-    text-align: center;
+    margin-bottom: 15px;
+    text-align: left;
+    padding-left: 20px;
 }
 
 .package-destinations .card {
     border: none;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-}
-
-.package-destinations .card-body {
     padding: 20px;
+    margin-bottom: 20px;
 }
 
-.package-destinations .card-title {
+/* Card Titles */
+.card-title {
     font-size: 1.25em;
     color: #2c3e50;
     font-weight: bold;
 }
 
-.package-destinations .card-text {
+.card-text {
     font-size: 0.95em;
     color: #606060;
 }

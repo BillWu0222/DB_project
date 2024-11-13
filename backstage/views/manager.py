@@ -1,177 +1,178 @@
 from flask import Blueprint, render_template, request, url_for, redirect, flash
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from link import *
-from api.sql import *
-import imp, random, os, string
-from werkzeug.utils import secure_filename
-from flask import current_app
-
-UPLOAD_FOLDER = 'static/product'
-ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
+from flask_login import login_required, current_user
+from api.sql import Package, Destination, Order_List, Records
+import random, string
 
 manager = Blueprint('manager', __name__, template_folder='../templates')
-
-def config():
-    current_app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-    config = current_app.config['UPLOAD_FOLDER'] 
-    return config
 
 @manager.route('/', methods=['GET', 'POST'])
 @login_required
 def home():
-    return redirect(url_for('manager.productManager'))
+    return redirect(url_for('manager.packageManager'))
 
-@manager.route('/productManager', methods=['GET', 'POST'])
+@manager.route('/packageManager', methods=['GET', 'POST'])
 @login_required
-def productManager():
+def packageManager():
     if request.method == 'GET':
-        if(current_user.role == 'user'):
+        if current_user.role == 'user':
             flash('No permission')
             return redirect(url_for('index'))
         
     if 'delete' in request.values:
-        pid = request.values.get('delete')
-        data = Record.delete_check(pid)
+        package_id = request.values.get('delete')
+        associated_record = Records.check_product(package_id, None)  # 檢查是否有相關紀錄
         
-        if(data != None):
-            flash('failed')
+        if associated_record:
+            flash('無法刪除，該套餐存在相關紀錄')
         else:
-            data = Destination.get_destinations(pid)
-            Destination.delete_product(pid)
+            Package.delete_package(package_id)
+            flash('成功刪除套餐')
     
     elif 'edit' in request.values:
-        pid = request.values.get('edit')
-        return redirect(url_for('manager.edit', pid=pid))
+        package_id = request.values.get('edit')
+        return redirect(url_for('manager.edit', package_id=package_id))
     
-    book_data = book()
-    return render_template('productManager.html', book_data = book_data, user=current_user.name)
+    package_data = load_packages()
+    return render_template('packageManager.html', package_data=package_data, user=current_user.name)
 
-def book():
-    book_row = Destination.get_all_destination()
-    book_data = []
-    for i in book_row:
-        book = {
-            '商品編號': i[0],
-            '商品名稱': i[1],
-            '商品售價': i[2],
-            '商品類別': i[3]
+def load_packages():
+    package_rows = Package.get_all_packages()
+    package_data = []
+    for row in package_rows:
+        package = {
+            '套餐編號': row[0],
+            '套餐名稱': row[5],
+            '開始日期': row[1],
+            '結束日期': row[2],
+            '價格': row[3],
+            '數量': row[5],
+            '描述': row[6]
         }
-        book_data.append(book)
-    return book_data
+        package_data.append(package)
+    return package_data
 
 @manager.route('/add', methods=['GET', 'POST'])
+@login_required
 def add():
     if request.method == 'POST':
-        data = ""
-        while(data != None):
-            number = str(random.randrange( 10000, 99999))
+        # 生成隨機的套餐編號
+        package_id = ""
+        while True:
+            number = str(random.randrange(10000, 99999))
             en = random.choice(string.ascii_letters)
-            pid = en + number
-            data = Destination.get_product(pid)
+            package_id = en + number
+            if not Package.get_package(package_id):
+                break
 
         pname = request.values.get('pname')
         price = request.values.get('price')
-        category = request.values.get('category')
-        pdesc = request.values.get('description')
+        start_date = request.values.get('start_date')
+        end_date = request.values.get('end_date')
+        quantity = request.values.get('quantity')
+        description = request.values.get('description')
 
-        # 檢查是否正確獲取到所有欄位的數據
-        if pname is None or price is None or category is None or pdesc is None:
+        # 驗證必填欄位
+        if not all([pname, price, start_date, end_date, quantity, description]):
             flash('所有欄位都是必填的，請確認輸入內容。')
-            return redirect(url_for('manager.productManager'))
+            return redirect(url_for('manager.packageManager'))
 
-        # 檢查欄位的長度
-        if len(pname) < 1 or len(price) < 1:
-            flash('商品名稱或價格不可為空。')
-            return redirect(url_for('manager.productManager'))
+        # 新增套餐
+        Package.add_package({
+            'pname': pname,
+            'price': price,
+            'startdate': start_date,
+            'enddate': end_date,
+            'description': description,
+            'quantity': quantity
+        })
 
+        return redirect(url_for('manager.packageManager'))
 
-        if (len(pname) < 1 or len(price) < 1):
-            return redirect(url_for('manager.productManager'))
-        
-        Destination.add_product(
-            {'pid' : pid,
-             'pname' : pname,
-             'price' : price,
-             'category' : category,
-             'pdesc':pdesc
-            }
-        )
-
-        return redirect(url_for('manager.productManager'))
-
-    return render_template('productManager.html')
+    return render_template('addPackage.html')
 
 @manager.route('/edit', methods=['GET', 'POST'])
 @login_required
 def edit():
+    # 檢查使用者角色是否為 'user'，如果是，則無權限進入此頁面
     if request.method == 'GET':
-        if(current_user.role == 'user'):
-            flash('No permission')
-            return redirect(url_for('bookstore'))
+        if current_user.role == 'user':
+            flash('無權限')
+            return redirect(url_for('index'))
 
     if request.method == 'POST':
-        Destination.update_product(
-            {
-            'pname' : request.values.get('pname'),
-            'price' : request.values.get('price'),
-            'category' : request.values.get('category'), 
-            'pdesc' : request.values.get('description'),
-            'pid' : request.values.get('pid')
-            }
-        )
-        
-        return redirect(url_for('manager.productManager'))
+        # 從表單中獲取更新的套餐數據
+        package_id = request.values.get('package_id')
+        pname = request.values.get('pname')
+        price = request.values.get('price')
+        start_date = request.values.get('start_date')
+        end_date = request.values.get('end_date')
+        description = request.values.get('description')
+
+        # 更新套餐資料
+        Package.update_package({
+            'plid': package_id,
+            'pname': pname,
+            'totalprice': price,
+            'startdate': start_date,
+            'enddate': end_date,
+            'description': description
+        })
+
+        return redirect(url_for('manager.packageManager'))
 
     else:
-        product = show_info()
-        return render_template('edit.html', data=product)
+        # 如果是 GET 請求，從 URL 參數中獲取 package_id，並從資料庫中讀取對應的套餐資料
+        package_id = request.args.get('package_id')
+        package = Package.get_package(package_id)
 
-
-def show_info():
-    pid = request.args['pid']
-    data = Destination.get_destinations(pid)
-    pname = data[1]
-    price = data[2]
-    category = data[3]
-    description = data[4]
-
-    product = {
-        '商品編號': pid,
-        '商品名稱': pname,
-        '單價': price,
-        '類別': category,
-        '商品敘述': description
-    }
-    return product
-
+  
+        package_info = {
+            '套餐編號': package[0], 
+            '開始日期': package[1], 
+            '結束日期': package[2],  
+            '價格': package[3],      
+            '套餐名稱': package[5],  
+            '描述': package[6]       
+        }
+    
+        return render_template('editPackage.html', data=package_info)
 
 @manager.route('/orderManager', methods=['GET', 'POST'])
 @login_required
 def orderManager():
+    """Admin view to manage and view all orders and their details."""
     if request.method == 'POST':
-        pass
+        pass  # Here you can add logic for POST requests if necessary, e.g., order status updates
     else:
-        order_row = Order_List.get_order()
+        # Retrieve all orders for the admin view
+        order_rows = Order_List.get_admin_order()
         order_data = []
-        for i in order_row:
+        
+        # Process each order row to build order summaries
+        for row in order_rows:
+            # Calculate total price if not already provided
+            total_price = row[2] if row[2] is not None else Order_List.calculate_total_price(row[0])
             order = {
-                '訂單編號': i[0],
-                '訂購人': i[1],
-                '訂單總價': i[2],
-                '訂單時間': i[3]
+                '訂單編號': row[0],
+                '訂購人': row[1],
+                '訂單總價': total_price,
+                '訂單時間': row[3]
             }
             order_data.append(order)
-            
-        orderdetail_row = Order_List.get_orderdetail()
-        order_detail = []
-
-        for j in orderdetail_row:
-            orderdetail = {
-                '訂單編號': j[0],
-                '商品名稱': j[1],
-                '商品單價': j[2],
-                '訂購數量': j[3]
+        
+        # Retrieve detailed information for all orders for admin
+        order_detail_rows = Order_List.get_all_order_details()
+        order_details = []
+        
+        # Process each order detail row
+        for row in order_detail_rows:
+            order_detail = {
+                '訂單編號': row[0],
+                '套餐名稱': row[1],
+                '單價': row[2],
+                '數量': row[3]
             }
-            order_detail.append(orderdetail)
+            order_details.append(order_detail)
 
-    return render_template('orderManager.html', orderData = order_data, orderDetail = order_detail, user=current_user.name)
+    # Render the orderManager template with both the order summary and details
+    return render_template('orderManager.html', orderData=order_data, orderDetail=order_details, user=current_user.name)
