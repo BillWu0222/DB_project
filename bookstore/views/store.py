@@ -10,163 +10,105 @@ store = Blueprint('travel_packages', __name__, template_folder='../templates')
 @store.route('/', methods=['GET', 'POST'])
 @login_required
 def travel_packages():
-    result = Package.count()  
-    count = math.ceil(result / 9)
+    page = int(request.args.get('page', 1))
+    start = (page - 1) * 9
+    end = page * 9
+    keyword = request.args.get('keyword', '').strip()
     flag = 0
+    package_data = []
 
     if request.method == 'GET' and current_user.role == 'manager':
         flash('No permission')
         return redirect(url_for('manager.home'))
 
-    if 'keyword' in request.args and 'page' in request.args:
-        # 搜尋套餐邏輯
-        total = 0
-        single = 1
-        page = int(request.args['page'])
-        start = (page - 1) * 9
-        end = page * 9
-        search = request.values.get('keyword')
-        
-        package_rows = DB.fetchall('SELECT * FROM package WHERE pname LIKE %s', ('%' + search + '%',))
-        package_data = []
-
-        for row in package_rows:
-            package = {
-                '套餐編號': row[0],
-                '套餐名稱': row[5],  
-                '開始日期': row[1],  
-                '結束日期': row[2],  
-                '價格': row[3],     
-                '數量': row[4],
-                '描述': row[6] 
-            }
-            package_data.append(package)
-            total += 1
-
-        if len(package_data) < end:
-            end = len(package_data)
-            flag = 1
-
-        final_data = package_data[start:end]
-        count = math.ceil(total / 9)
-
-        return render_template(
-            'travel_packages.html', 
-            single=single, 
-            keyword=search, 
-            package_data=final_data, 
-            user=current_user.name, 
-            page=page, 
-            flag=flag, 
-            count=count
+    if keyword:
+        search_query = f"%{keyword}%"
+        package_rows = DB.fetchall(
+            'SELECT * FROM package WHERE pname LIKE %s OR description LIKE %s', 
+            (search_query, search_query)
         )
-    elif 'packageid' in request.args:
-        packageid = request.args['packageid']
-        package_data = Package.get_package(packageid)
-        destination_rows = Destination.get_destinations_by_package(packageid)  # 獲取景點資訊
-        accommodation_rows = Accommodation.get_accommodation_by_package(packageid)  # 獲取住宿資訊
-
-        if package_data:
-            package = {
-                '套餐編號': packageid,
-                '套餐名稱': package_data[5],
-                '開始日期': package_data[1],
-                '結束日期': package_data[2],
-                '價格': package_data[3],
-                '數量': package_data[4],
-                '描述': package_data[6],
-                '住宿': {
-                    'accname': accommodation_rows[0][0],
-                    'address': accommodation_rows[0][1],
-                    'days': accommodation_rows[0][2],
-                    'accprice': accommodation_rows[0][3],
-                    'day': 1  # 假設住宿在 Day 1，如有多晚住宿可能需要調整
-                } if accommodation_rows else None,
-                'day1_destinations': [],
-                'day2_destinations': []
-            }
-
-            # 根據 day 將行程分配到 day1 和 day2
-            for row in destination_rows:
-                destination = {
-                    '景點名稱': row[0],
-                    '位置': row[1],
-                    '行程價格': row[2],
-                    '描述': row[3]
-                }
-                if row[4] == 1:  # day == 1
-                    package['day1_destinations'].append(destination)
-                elif row[4] == 2:  # day == 2
-                    package['day2_destinations'].append(destination)
-
-            return render_template(
-                'destination_detail.html',
-                data=package,
-                user=current_user.name
-            )
-        else:
-            flash("找不到此套餐的詳細資料")
-            return redirect(url_for('travel_packages.travel_packages'))
-    elif 'page' in request.args:
-        # 分頁顯示所有套餐邏輯
-        page = int(request.args['page'])
-        start = (page - 1) * 9
-        end = page * 9
-        
-        package_rows = Package.get_all_packages()
-        package_data = []
-        for row in package_rows:
-            package = {
-                '套餐編號': row[0],
-                '套餐名稱': row[5], 
-                '開始日期': row[1],   
-                '結束日期': row[2],   
-                '價格': row[3],     
-                '數量': row[4],
-                '描述': row[6]
-            }
-            package_data.append(package)
-
-        if len(package_data) < end:
-            end = len(package_data)
-            flag = 1
-
-        final_data = package_data[start:end]
-
-        return render_template(
-            'travel_packages.html', 
-            package_data=final_data, 
-            user=current_user.name, 
-            page=page, 
-            flag=flag, 
-            count=count
-        )
-
     else:
-        # 顯示前 9 筆套餐資料邏輯
-        package_rows = Package.get_all_packages()[:9] 
-        package_data = []
+        package_rows = Package.get_all_packages()
 
-        for row in package_rows:
-            package = {
-                '套餐編號': row[0],
-                '套餐名稱': row[5],  
-                '開始日期': row[1],  
-                '結束日期': row[2], 
-                '價格': row[3],      
-                '數量': row[4],
-                '描述': row[6] 
-            }
-            package_data.append(package)
+    total = len(package_rows)
+    count = math.ceil(total / 9)
+    final_data = package_rows[start:end]
 
-        return render_template(
-            'travel_packages.html', 
-            package_data=package_data, 
-            user=current_user.name, 
-            page=1, 
-            flag=flag, 
-            count=count
-        )
+    for row in final_data:
+        package = {
+            '套餐編號': row[0],
+            '套餐名稱': row[5],
+            '開始日期': row[1],
+            '結束日期': row[2],
+            '價格': row[3],
+            '數量': row[4],
+            '描述': row[6]
+        }
+        package_data.append(package)
+
+    if len(package_data) < 9 or (page == count and total % 9 != 0):
+        flag = 1
+
+    return render_template(
+        'travel_packages.html',
+        package_data=package_data,
+        user=current_user.name,
+        page=page,
+        flag=flag,
+        count=count,
+        keyword=keyword
+    )
+
+# 套餐詳細頁面
+@store.route('/packages', methods=['GET'])
+@login_required
+def package_detail():
+    packageid = request.args.get('packageid', type=int)
+    package_data = Package.get_package(packageid)
+    destination_rows = Destination.get_destinations_by_package(packageid)
+    accommodation_rows = Accommodation.get_accommodation_by_package(packageid)
+
+    if not package_data:
+        flash("找不到此套餐的詳細資料")
+        return redirect(url_for('travel_packages.travel_packages'))
+
+    package = {
+        '套餐編號': packageid,
+        '套餐名稱': package_data[5],
+        '開始日期': package_data[1],
+        '結束日期': package_data[2],
+        '價格': package_data[3],
+        '數量': package_data[4],
+        '描述': package_data[6],
+        '住宿': {
+            'accname': accommodation_rows[0][0] if accommodation_rows else None,
+            'address': accommodation_rows[0][1] if accommodation_rows else None,
+            'days': accommodation_rows[0][2] if accommodation_rows else None,
+            'accprice': accommodation_rows[0][3] if accommodation_rows else None,
+            'day': 1
+        } if accommodation_rows else None,
+        'day1_destinations': [],
+        'day2_destinations': []
+    }
+
+    for row in destination_rows:
+        destination = {
+            '景點名稱': row[0],
+            '位置': row[1],
+            '行程價格': row[2],
+            '描述': row[3]
+        }
+        if row[4] == 1:
+            package['day1_destinations'].append(destination)
+        elif row[4] == 2:
+            package['day2_destinations'].append(destination)
+
+    return render_template(
+        'destination_detail.html',
+        data=package,
+        user=current_user.name
+    )
+
 
 # 會員購物車
 @store.route('/cart', methods=['GET', 'POST'])

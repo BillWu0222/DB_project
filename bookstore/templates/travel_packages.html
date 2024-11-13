@@ -28,7 +28,7 @@
           <path d="M12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
         </svg>
       </span>
-      <input name="keyword" class="form-control me-2" type="search" placeholder="搜尋套餐" aria-label="Search">
+      <input name="keyword" class="form-control me-2" type="search" placeholder="搜尋套餐" aria-label="Search" value="{{ keyword }}">
       <button class="btn btn-outline-success" type="submit">搜尋</button>
     </div>
   </form>
@@ -53,7 +53,7 @@
           <p class="card-text">描述：{{ package['描述'] }}</p>
 
           <!-- View Package Details -->
-          <a href="{{ url_for('travel_packages.travel_packages', packageid=package['套餐編號']) }}" class="btn btn-outline-primary">查看套餐資訊</a>
+          <a href="{{ url_for('travel_packages.package_detail', packageid=package['套餐編號']) }}" class="btn btn-outline-primary">查看套餐資訊</a>
 
           <!-- Add to Cart Form -->
           <form action="{{ url_for('travel_packages.cart') }}" method="post" style="display:inline;">
