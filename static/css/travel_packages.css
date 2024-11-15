@@ -29,6 +29,17 @@ body {
     padding: 20px;
 }
 
+/* 圖片 */
+.package_table .card img {
+    width: 100%;
+    height: auto; 
+    max-height: 200px; 
+    object-fit: cover;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+/* Card Text */
 .card-title {
     font-size: 1.4em;
     color: #2c3e50;
@@ -53,7 +64,7 @@ body {
 
 /* Primary Button - 查看套餐資訊 */
 .package_table .btn-outline-primary {
-    background-color: #BFA275; /* 套餐資訊的配色 */
+    background-color: #BFA275;
     color: #ffffff;
     border: none;
 }
@@ -64,7 +75,7 @@ body {
 
 /* Secondary Button - 加入購物車 */
 .package_table .btn-outline-success {
-    background-color: #bdc3c7; /* 柔和的灰藍色 */
+    background-color: #bdc3c7;
     color: #ffffff;
     border: none;
 }

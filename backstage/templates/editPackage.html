@@ -5,15 +5,15 @@
 
 {% block title %} 編輯套餐 {% endblock title %}
 
-{% block content%}
+{% block content %}
 <br/>
 <div class="container-xl">
   <br/>
-  <form method="post" enctype=multipart/form-data action={{ url_for('manager.edit') }}>
+  <form method="post" enctype="multipart/form-data" action="{{ url_for('manager.edit') }}">
     <table class="table table-bordered">
       <tr>
         <th>套餐編號</th>
-        <td><input class="form-control" type="text" value="{{ data.套餐編號 }}" name="plid" readonly class="id_input"></td>
+        <td><input class="form-control" type="text" value="{{ data.套餐編號 }}" name="package_id" readonly></td>
       </tr>
       <tr>
         <th>套餐名稱</th>
@@ -25,23 +25,33 @@
       </tr>
       <tr>
         <th>開始日期</th>
-        <td><input class="form-control" type="date" value="{{ data.開始日期 }}" name="startdate" required></td>
+        <td><input class="form-control" type="date" value="{{ data.開始日期 }}" name="start_date" required></td>
       </tr>
       <tr>
         <th>結束日期</th>
-        <td><input class="form-control" type="date" value="{{ data.結束日期 }}" name="enddate" required></td>
+        <td><input class="form-control" type="date" value="{{ data.結束日期 }}" name="end_date" required></td>
       </tr>
       <tr>
         <th>套餐描述</th>
+        <td><textarea class="form-control" name="description" required>{{ data.描述 }}</textarea></td>
+      </tr>
+      <tr>
+        <th>套餐圖片</th>
         <td>
-          <textarea class="form-control" name="description">{{ data.套餐描述 }}</textarea>
+          <input type="file" class="form-control" name="image" accept="image/*">
+          {% if data.圖片 %}
+          <!-- 將圖片以 base64 格式顯示 -->
+          <img src="data:image/jpeg;base64,{{ data.圖片 | b64encode }}" class="mt-2" style="width: 100px; height: auto;">
+          {% endif %}
         </td>
       </tr>
     </table>
     <center>
       <div class="option">
         <button class="btn btn-outline-success" type="submit">確定修改</button> 
-        <a href="{{ url_for('manager.packageManager') }}"><button type="button" class="btn btn-outline-danger">回套餐管理</button></a>
+        <a href="{{ url_for('manager.packageManager') }}">
+          <button type="button" class="btn btn-outline-danger">回套餐管理</button>
+        </a>
       </div>
     </center>
   </form>

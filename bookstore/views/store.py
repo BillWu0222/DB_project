@@ -3,6 +3,7 @@ from flask import Blueprint, request, url_for, redirect, flash, render_template
 from flask_login import login_required, current_user
 from api.sql import Package, Destination, DB, Cart, Records ,Order_List ,Member,Accommodation
 from datetime import datetime
+import base64
 
 # Define Blueprint
 store = Blueprint('travel_packages', __name__, template_folder='../templates')
@@ -35,6 +36,8 @@ def travel_packages():
     final_data = package_rows[start:end]
 
     for row in final_data:
+        # base64 編碼圖片欄位
+        image_data = base64.b64encode(row[7]).decode('utf-8') if row[7] else None
         package = {
             '套餐編號': row[0],
             '套餐名稱': row[5],
@@ -42,7 +45,8 @@ def travel_packages():
             '結束日期': row[2],
             '價格': row[3],
             '數量': row[4],
-            '描述': row[6]
+            '描述': row[6],
+            '圖片': image_data  # 使用 base64 編碼後的圖片
         }
         package_data.append(package)
 
@@ -72,6 +76,11 @@ def package_detail():
         flash("找不到此套餐的詳細資料")
         return redirect(url_for('travel_packages.travel_packages'))
 
+    # 如果套餐包含圖片，則轉換圖片為 base64 格式
+    image_data = package_data[7]  
+    image_base64 = base64.b64encode(image_data).decode('utf-8') if image_data else None
+
+    # 套餐詳細資訊
     package = {
         '套餐編號': packageid,
         '套餐名稱': package_data[5],
@@ -80,6 +89,7 @@ def package_detail():
         '價格': package_data[3],
         '數量': package_data[4],
         '描述': package_data[6],
+        '圖片': image_base64,  
         '住宿': {
             'accname': accommodation_rows[0][0] if accommodation_rows else None,
             'address': accommodation_rows[0][1] if accommodation_rows else None,
@@ -91,6 +101,7 @@ def package_detail():
         'day2_destinations': []
     }
 
+    # 行程資訊
     for row in destination_rows:
         destination = {
             '景點名稱': row[0],
@@ -108,7 +119,6 @@ def package_detail():
         data=package,
         user=current_user.name
     )
-
 
 # 會員購物車
 @store.route('/cart', methods=['GET', 'POST'])
@@ -166,19 +176,15 @@ def cart():
     
 def only_cart():
     """Retrieve all items currently in the user's cart."""
-    # Check if the user has a cart
+   
     if not Cart.check(current_user.id):
         return None
 
-    # Get the latest cart for the user
     cart_data = Cart.get_cart(current_user.id)
     if not cart_data:
         return None
 
-    # Get the transaction ID from the cart data
     tno = int(cart_data[0])
-
-    # Retrieve cart items based on transaction ID
     cart_items = Records.get_record(tno)
     return [
         {
@@ -188,7 +194,7 @@ def only_cart():
             '結束日期': Package.get_end_date(item[1]),
             '價格': item[3],
             '數量': item[2],
-            '總價': item[2] * item[3]  # Total for each item (quantity * price)
+            '總價': item[2] * item[3]  
         }
         for item in cart_items
     ]
@@ -231,18 +237,18 @@ def complete_order():
 def orderlist():
     user_id = current_user.id
 
-    # 獲取用戶的訂單概要
+    # 獲取訂單
     data = Order_List.get_user_order(user_id)
     orderlist = []
     for i in data:
         temp = {
             '訂單編號': i[0],
-            '訂單總價': i[1],  # 顯示單一訂單的價格
+            '訂單總價': i[1],  
             '訂單時間': i[2]
         }
         orderlist.append(temp)
     
-    # 獲取用戶的所有訂單詳細資訊
+    # 訂單詳細資訊
     orderdetail_row = Order_List.get_user_order_detail(user_id)
     orderdetail = {}
     for j in orderdetail_row:

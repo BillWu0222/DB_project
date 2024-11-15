@@ -83,7 +83,7 @@ class Destination:
             input_data['dprice'], 
             input_data['dpid'], 
             input_data['desc'],
-            input_data['day']  # 新增 day 欄位
+            input_data['day']  
         ))
 
     @staticmethod
@@ -104,7 +104,7 @@ class Destination:
             input_data['dprice'], 
             input_data['dpid'], 
             input_data['desc'], 
-            input_data['day'],  # 更新 day 欄位
+            input_data['day'], 
             input_data['destinationid']
         ))
 
@@ -187,19 +187,28 @@ class Package:
     def get_all_packages():
         sql = 'SELECT * FROM package'
         return DB.fetchall(sql)
-    
+
     @staticmethod
     def get_name(plid):
-        """根據套餐編號獲取套餐名稱。"""
         sql = 'SELECT pname FROM package WHERE plid = %s'
         result = DB.fetchone(sql, (plid,))
         return result[0] if result else None
 
     @staticmethod
     def add_package(input_data):
-        sql = 'INSERT INTO package (pname, price, startdate, enddate, description) VALUES (%s, %s, %s, %s, %s)'
-        DB.execute_input(sql, (input_data['pname'], input_data['price'], input_data['startdate'], input_data['enddate'], input_data['description']))
-
+        sql = '''
+        INSERT INTO package (pname, totalprice, startdate, enddate, description, amount, image) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        '''
+        DB.execute_input(sql, (
+            input_data['pname'],
+            input_data['totalprice'],
+            input_data['startdate'],
+            input_data['enddate'],
+            input_data['description'],
+            input_data['quantity'],
+            psycopg2.Binary(input_data['image']) if input_data['image'] else None  # 將圖片轉為 Binary 格式
+        ))
     @staticmethod
     def delete_package(plid):
         sql = 'DELETE FROM package WHERE plid = %s'
@@ -207,22 +216,46 @@ class Package:
 
     @staticmethod
     def update_package(input_data):
-        sql = 'UPDATE package SET pname = %s, price = %s, startdate = %s, enddate = %s, description = %s WHERE plid = %s'
-        DB.execute_input(sql, (input_data['pname'], input_data['price'], input_data['startdate'], input_data['enddate'], input_data['description'], input_data['plid']))
-    
+        sql = '''
+            UPDATE package 
+            SET pname = %s, totalprice = %s, startdate = %s, enddate = %s, description = %s, image = %s
+            WHERE plid = %s
+        '''
+        DB.execute_input(sql, (
+            input_data['pname'],
+            input_data['totalprice'],
+            input_data['startdate'],
+            input_data['enddate'],
+            input_data['description'],
+            input_data['image'],
+            input_data['plid']
+        ))
+
     @staticmethod
     def get_start_date(plid):
-        """根據套餐編號取得開始日期。"""
         sql = 'SELECT startdate FROM package WHERE plid = %s'
         result = DB.fetchone(sql, (plid,))
         return result[0] if result else None
-    
+
     @staticmethod
     def get_end_date(plid):
-        """根據套餐編號取得結束日期。"""
         sql = 'SELECT enddate FROM package WHERE plid = %s'
         result = DB.fetchone(sql, (plid,))
         return result[0] if result else None
+    
+    @staticmethod
+    def execute_input(sql, input_data):
+        connection = DB.connect()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(sql, input_data)
+                connection.commit()
+        except psycopg2.Error as e:
+            print(f"Error executing SQL: {e}")
+            connection.rollback()
+            raise e
+        finally:
+            DB.release(connection)
     
 class Member(UserMixin):
     def __init__(self, mid, name, role):
@@ -384,8 +417,8 @@ class Order_List:
             input_data['mid'],
             input_data['ordertime'],
             input_data['format'],
-            input_data['total_price'],  # 訂單的總價格
-            input_data['price'],  # 單筆套餐的價格
+            input_data['total_price'],  
+            input_data['price'],  
             input_data['plid'],
             input_data['transactionid']
         ))

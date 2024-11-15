@@ -42,6 +42,13 @@
 
     <div class="col-sm-4">
       <div class="card mb-3">
+        <!-- Package Image Display -->
+        {% if package['圖片'] %}
+        <img src="data:image/jpeg;base64,{{ package['圖片'] }}" class="card-img-top" alt="{{ package['套餐名稱'] }}">
+        {% else %}
+        <img src="{{ url_for('static', filename='images/default.jpg') }}" class="card-img-top" alt="無圖片">
+        {% endif %}
+
         <div class="card-body">
           <h5 class="card-title">{{ package['套餐名稱'] }}</h5>
           <p class="card-text">
