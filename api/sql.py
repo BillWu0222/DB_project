@@ -323,12 +323,13 @@ class Cart:
         """Create a new cart entry for the user."""
         sql = 'INSERT INTO cart (mid, carttime, tno) VALUES (%s, %s, nextval(\'cart_tno_seq\'))'
         DB.execute_input(sql, (user_id, cart_time))
-
-    @staticmethod
+        
+    staticmethod
     def clear_cart(user_id):
         """Delete all carts associated with a user."""
         sql = 'DELETE FROM cart WHERE mid = %s'
         DB.execute_input(sql, (user_id,))
+
 
     @staticmethod
     def get_tno_by_user_id(user_id):
@@ -353,14 +354,18 @@ class Records:
 
     @staticmethod
     def add_product(input_data):
-        """Add a new product entry to the records."""
-        sql = 'INSERT INTO records (plid, transactionid, amount, price) VALUES (%s, %s, %s, %s)'
-        DB.execute_input(sql, (
-            input_data['pid'],
-            input_data['tno'],
-            input_data.get('amount', 1),
-            input_data['saleprice']
-        ))
+        print(f"DEBUG: Preparing to add product - {input_data}")
+        sql = 'INSERT INTO records (plid, transactionid, amount ,price) VALUES (%s, %s, %s, %s)'
+        try:
+            DB.execute_input(sql, (
+                input_data['pid'],
+                input_data['tno'],
+                input_data.get('amount', 1),
+                input_data['saleprice']
+            ))
+            print(f"DEBUG: Product added successfully - {input_data}")
+        except Exception as e:
+            print(f"ERROR: Failed to add product - {input_data}, error: {str(e)}")
 
     @staticmethod
     def update_product(input_data):

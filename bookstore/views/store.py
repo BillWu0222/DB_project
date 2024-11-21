@@ -200,37 +200,75 @@ def only_cart():
     ]
 
 def complete_order():
-    cart_data = Cart.get_cart(current_user.id)
-    tno = cart_data[0] if cart_data else None
+    try:
+        # Step 1: Retrieve cart data
+        cart_data = Cart.get_cart(current_user.id)
+        print(f"DEBUG: Retrieved cart data - user_id: {current_user.id}, cart_data: {cart_data}")
+        tno = cart_data[0] if cart_data else None
 
-    if tno is None:
-        flash("Cart not found.")
+        if tno is None:
+            flash("購物車不存在或已清空，請重新選擇商品。")
+            print("ERROR: No cart found or cart is empty.")
+            return redirect(url_for('travel_packages.cart'))
+
+        # Step 2: Calculate total price
+        total_price = Records.get_total(tno)
+        print(f"DEBUG: Calculated total price - transaction_id: {tno}, total_price: {total_price}")
+        if total_price is None or total_price == 0:
+            flash("無法計算訂單總價，請重新嘗試。")
+            print("ERROR: Failed to calculate total price or total is 0.")
+            return redirect(url_for('travel_packages.cart'))
+
+        # Step 3: Retrieve cart items
+        cart_items = Records.get_record(tno)
+        print(f"DEBUG: Retrieved cart items - transaction_id: {tno}, cart_items: {cart_items}")
+        if not cart_items:
+            flash("購物車中沒有商品，請先添加商品。")
+            print("ERROR: No items found in cart.")
+            return redirect(url_for('travel_packages.cart'))
+
+        # Step 4: Add order to database
+        plid = cart_items[0][1]  # 第一個商品的 plid
+        price = cart_items[0][3]  # 第一個商品的價格
+
+        order_time = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+        time_format = 'yyyy/mm/dd hh24:mi:ss'
+        print(f"DEBUG: Preparing to add order - user_id: {current_user.id}, order_time: {order_time}, total_price: {total_price}")
+
+        try:
+            Order_List.add_order({
+                'mid': current_user.id,
+                'ordertime': order_time,
+                'total_price': total_price,
+                'format': time_format,
+                'plid': plid,
+                'price': price,
+                'transactionid': tno
+            })
+            print(f"DEBUG: Order added successfully - transaction_id: {tno}, total_price: {total_price}")
+        except Exception as e:
+            print(f"ERROR: Failed to add order - transaction_id: {tno}, error: {str(e)}")
+            flash("下單過程中出現錯誤，請稍後再試。")
+            return redirect(url_for('travel_packages.cart'))
+
+        # Step 5: Clear cart from database
+        try:
+            Cart.clear_cart(current_user.id)
+            print(f"DEBUG: Cleared cart for user_id: {current_user.id}")
+        except Exception as e:
+            print(f"ERROR: Failed to clear cart for user_id: {current_user.id}, error: {str(e)}")
+            flash("清空購物車時發生錯誤，請聯繫客服。")
+            return redirect(url_for('travel_packages.cart'))
+
+        # Step 6: Redirect to the complete page
+        flash("下單完成！")
+        return render_template('complete.html', user=current_user.name)
+
+    except Exception as e:
+        print(f"ERROR: Exception in complete_order - user_id: {current_user.id}, error: {str(e)}")
+        flash(f"下單過程中出現錯誤: {str(e)}")
         return redirect(url_for('travel_packages.cart'))
 
-    total_price = Records.get_total(tno)
-    Cart.clear_cart(current_user.id)
-
-    cart_items = Records.get_record(tno)
-    if not cart_items:
-        flash("No items found in the cart.")
-        return redirect(url_for('travel_packages.cart'))
-
-    plid = cart_items[0][1]
-    price = cart_items[0][2]
-
-    order_time = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
-    time_format = 'yyyy/mm/dd hh24:mi:ss'
-    Order_List.add_order({
-        'mid': current_user.id,
-        'ordertime': order_time,
-        'total_price': total_price,
-        'format': time_format,
-        'plid': plid,
-        'price': price,
-        'transactionid': tno
-    })
-
-    return render_template('complete.html', user=current_user.name)
 
 @store.route('/orderlist')
 @login_required
@@ -262,4 +300,3 @@ def orderlist():
         })
 
     return render_template('orderlist.html', data=orderlist, detail=orderdetail, user=current_user.name)
-
